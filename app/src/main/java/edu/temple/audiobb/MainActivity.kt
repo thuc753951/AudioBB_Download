@@ -1,19 +1,20 @@
 package edu.temple.audiobb
 
-import android.content.*
-import android.os.Bundle
-import android.os.Handler
-import android.os.IBinder
-import android.os.Looper
+import android.app.DownloadManager
+import android.content.ComponentName
+import android.content.Intent
+import android.content.ServiceConnection
+import android.net.Uri
+import android.os.*
 import android.util.Log
 import android.view.View
 import android.widget.ImageButton
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import edu.temple.audiobb.R.id.control
 import edu.temple.audlibplayer.PlayerService
+import java.io.File
 
 class MainActivity : AppCompatActivity(), BookListFragment.BookSelectedInterface, ControlFragment.ControlInterface {
 
@@ -22,7 +23,8 @@ class MainActivity : AppCompatActivity(), BookListFragment.BookSelectedInterface
     private lateinit var bookListFragment : BookListFragment
     private lateinit var controlFragment: ControlFragment
     lateinit var mediaPlayer: PlayerService.MediaControlBinder
-
+    var num: Long = 0
+    lateinit var tempFile: String
 
     private val searchRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         supportFragmentManager.popBackStack()
@@ -56,7 +58,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.BookSelectedInterface
 
     // to show progress of the service
     var progressHandler = Handler(
-        Looper.getMainLooper()
+            Looper.getMainLooper()
     ) { message -> // Don't update contols if we don't know what bok the service is playing
         if (message.obj != null && selectedBookViewModel.getPlayingBook().value != null) {
             var tempBook = selectedBookViewModel.getPlayingBook().value
@@ -96,7 +98,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.BookSelectedInterface
         //register for download reciever here
         // this is how you start a intent to start a service
         serviceIntent = Intent(this, PlayerService::class.java)
-        bindService(serviceIntent,Connection, BIND_AUTO_CREATE)
+        bindService(serviceIntent, Connection, BIND_AUTO_CREATE)
 
         if(supportFragmentManager.findFragmentById(R.id.control) !is ControlFragment){
             controlFragment = ControlFragment()
@@ -164,6 +166,23 @@ class MainActivity : AppCompatActivity(), BookListFragment.BookSelectedInterface
     }
 
 
+    fun download(book: Book): String{
+
+        // when getting the directory and path, make sure to use get absolute path. Important
+        val file = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!.absolutePath, java.lang.String.valueOf(book.id))
+        val file_uri = Uri.parse("https://kamorris.com/lab/audlib/download.php?id=" + book.id)
+        val downloadManager = getSystemService(DOWNLOAD_SERVICE) as DownloadManager
+        var request = DownloadManager.Request(file_uri)
+        request.setTitle("audio downloading : ${book.title}")
+        request.setDescription("Title: ${book.title}  Author: ${book.author}  Duration: ${book.duration}")
+        request.setDestinationUri(Uri.fromFile(file))
+
+        num = downloadManager.enqueue(request)
+        Log.d("FILE", "download Status id: $num")
+
+        return file.path.toString()
+    }
+
 
     override fun play() {
         //Toast.makeText(this, "Pressed Play", Toast.LENGTH_SHORT).show()
@@ -175,11 +194,19 @@ class MainActivity : AppCompatActivity(), BookListFragment.BookSelectedInterface
             if(serviceConnected){
                 mediaPlayer.play(tempBook.id)
                 // download here for next assignment probably
+                tempFile = download(selectedBookViewModel.getPlayingBook().value!!)
                 //Toast.makeText(this, "Playing "+tempBook.title, Toast.LENGTH_SHORT).show()
+                Log.d("FILE", "Playing from online check")
             }
 
-        }else{ //do something else??
-
+        }else{ //if file exists already, play that
+            // if the File exists, play the downloaded file
+            //Log.d( "FILE", bookList.getByTitle(selectedBook).getFile()+": exists");
+            val tempfile = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!.absolutePath, java.lang.String.valueOf(selectedBookViewModel.getPlayingBook().value))
+            if(serviceConnected){
+                mediaPlayer.play(tempfile, 0)
+                Log.d("FILE", "Playing from download check: ")
+            }
         }
         startService(serviceIntent)
     }
@@ -204,7 +231,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.BookSelectedInterface
         //Toast.makeText(this, "Changing Time", Toast.LENGTH_SHORT).show()
         if(serviceConnected){
             //Toast.makeText(this, "position: "+position.toString()+" duration: "+ selectedBookViewModel.getPlayingBook().value!!.duration.toString(), Toast.LENGTH_SHORT).show()
-            mediaPlayer.seekTo(((((position/100f)) * selectedBookViewModel.getPlayingBook().value!!.duration).toInt()))
+            mediaPlayer.seekTo(((((position / 100f)) * selectedBookViewModel.getPlayingBook().value!!.duration).toInt()))
 
 
         }
