@@ -25,8 +25,9 @@ class MainActivity : AppCompatActivity(), BookListFragment.BookSelectedInterface
     lateinit var mediaPlayer: PlayerService.MediaControlBinder
     var num: Long = 0
     lateinit var tempFile: String
-
+    lateinit var file: File
     var isDownloadDone = false
+    var FilePathName    = "myfile"
 
     private val searchRequest = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         supportFragmentManager.popBackStack()
@@ -102,7 +103,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.BookSelectedInterface
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-
+        file = File(filesDir, FilePathName)
         registerReceiver(onComplete, IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE))
         //register for download reciever here
         // this is how you start a intent to start a service
@@ -223,7 +224,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.BookSelectedInterface
             } else {
                 // if the File exists, play the downloaded file
                 //Log.d( "FILE", bookList.getByTitle(selectedBook).getFile()+": exists");
-                val tempfile = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!.absolutePath, java.lang.String.valueOf(selectedBookViewModel.getPlayingBook().value))
+                val tempfile = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)!!.absolutePath, java.lang.String.valueOf(selectedBookViewModel.getPlayingBook().value!!.id))
                 if (serviceConnected) {
                     if(selectedBookViewModel.getDuration().value != null){
                         val time = selectedBookViewModel.getDuration().value
@@ -238,7 +239,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.BookSelectedInterface
 
             }
         }
-        //startService(serviceIntent)
+        startService(serviceIntent)
     }
 
     override fun pause(){
