@@ -14,6 +14,22 @@ class SelectedBookViewModel : ViewModel() {
         MutableLiveData()
     }
 
+    private val durationOfAudio: MutableLiveData<Int> by lazy {
+        MutableLiveData()
+    }
+
+    private val currentPlayingFile: MutableLiveData<String> by lazy {
+        MutableLiveData()
+    }
+
+    fun getCurrentFile(): LiveData<String> {
+        return currentPlayingFile
+    }
+
+    fun setCurrentFile(path: String){
+        this.currentPlayingFile.value
+    }
+
     fun getSelectedBook(): LiveData<Book> {
         return selectedBook
     }
@@ -31,7 +47,11 @@ class SelectedBookViewModel : ViewModel() {
     }
 
     fun setDuration(position: Int){
-        this.playingBook.value!!.duration = position
+        this.durationOfAudio.value = position
+    }
+
+    fun getDuration(): LiveData<Int> {
+        return durationOfAudio
     }
 
 }
