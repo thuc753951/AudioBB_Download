@@ -7,13 +7,14 @@ import android.os.*
 import android.util.Log
 import android.view.View
 import android.widget.ImageButton
-import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
 import edu.temple.audiobb.R.id.control
 import edu.temple.audlibplayer.PlayerService
+import java.io.BufferedInputStream
 import java.io.File
+import java.net.URL
 
 class MainActivity : AppCompatActivity(), BookListFragment.BookSelectedInterface, ControlFragment.ControlInterface {
 
@@ -202,6 +203,7 @@ class MainActivity : AppCompatActivity(), BookListFragment.BookSelectedInterface
             }
         }
     }
+
 
     override fun play() {
         //Toast.makeText(this, "Pressed Play", Toast.LENGTH_SHORT).show()
